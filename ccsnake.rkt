@@ -16,17 +16,41 @@
 (define GRID_Y 45)
 (define GRID_WIDTH 700)
 (define GRID_HEIGHT 700)
+(define CELL_WIDTH 20)
+(define COUNT_CELLS (/ GRID_WIDTH CELL_WIDTH))
 (define GRID_BORDER_COLOR "black")
 (define BACKGROUND (empty-scene SCENE_WIDTH SCENE_HEIGHT))
 
 (provide (all-defined-out))
 
-(define (render score) (place-images/align (list (text (string-append SCORE_STRING (number->string score))
-                                                       SCORE_SIZE SCORE_COLOR)
-                                                 (rectangle GRID_WIDTH GRID_HEIGHT "outline" GRID_BORDER_COLOR))
-                                           (list (make-posn SCORE_X SCORE_Y)
-                                                 (make-posn GRID_X GRID_Y))
-                                           "left" "top" BACKGROUND))
+(define-struct game (snake-body score))
+;; Game is (make-game  (listof cells) score)
+;; interp. the current state of a snake game
+;;         with the current cells of the snake body and score
+
+(define (render g) (place-images/align (list (text (string-append SCORE_STRING (number->string (game-score g)))
+                                                   SCORE_SIZE SCORE_COLOR)
+                                             (rectangle GRID_WIDTH GRID_HEIGHT "outline" GRID_BORDER_COLOR)
+                                             (draw-snake-body (game-snake-body g) (empty-scene GRID_WIDTH GRID_WIDTH)))      
+                                       (list (make-posn SCORE_X SCORE_Y)
+                                             (make-posn GRID_X GRID_Y)
+                                             (make-posn GRID_X GRID_Y))
+                                       "left" "top" BACKGROUND))
+
+;; List of Numbers, Image -> Image
+;; Draws the body of the snake over the image of background
+(define (draw-snake-body body bg)
+  (cond [(empty? body) bg]
+        [(= 1 (length body)) 
+         (place-image/align (square CELL_WIDTH "solid" "seagreen")
+                            (* (remainder (car body) COUNT_CELLS) CELL_WIDTH)
+                            (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
+                            "left" "top" (draw-snake-body (cdr body) bg))] 
+        [else 
+         (place-image/align (square CELL_WIDTH "solid" "green")
+                            (* (remainder (car body) COUNT_CELLS) CELL_WIDTH)
+                            (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
+                            "left" "top" (draw-snake-body (cdr body) bg))]))
 
 (define (main score)
   (big-bang score
