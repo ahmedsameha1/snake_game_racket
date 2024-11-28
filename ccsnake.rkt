@@ -23,11 +23,11 @@
 
 (provide (all-defined-out))
 
-(define-struct game (snake-body head score))
+(struct game (snake-body head dir score) #:transparent)
 ;; Game is (make-game  (listof cells) score)
 ;; interp. the current state of a snake game
-;;         with the current cells of the snake body, the position of the head of the snake
-;;         and score
+;;         with the current cells of the snake body, the position of the head of the snake,
+;;         the direction of the move of the snake and score
 
 (define (render g) (place-images/align (list (text (string-append SCORE_STRING (number->string (game-score g)))
                                                    SCORE_SIZE SCORE_COLOR)
@@ -46,24 +46,67 @@
                   [else
                    (cond [(= head 0) (if (= acc 1) 
                                          (place-image/align (square CELL_WIDTH "solid" "seagreen")
-                                                            (* (remainder (car body) COUNT_CELLS) CELL_WIDTH)
+                                                            (* (col-of-cell (car body)) CELL_WIDTH)
                                                             (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
                                                             "left" "top" (aux (cdr body) head bg (add1 acc)))
                                          (place-image/align (square CELL_WIDTH "solid" "green")
-                                                            (* (remainder (car body) COUNT_CELLS) CELL_WIDTH)
-                                                            (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
+                                                            (* (col-of-cell (car body)) CELL_WIDTH)
+                                                            (* (row-of-cell (car body)) CELL_WIDTH)
                                                             "left" "top" (aux (cdr body) head bg (add1 acc))))]
                          [(= head 1) (if (= acc (length body0))
                                          (place-image/align (square CELL_WIDTH "solid" "seagreen")
-                                                            (* (remainder (car body) COUNT_CELLS) CELL_WIDTH)
-                                                            (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
+                                                            (* (col-of-cell (car body)) CELL_WIDTH)
+                                                            (* (row-of-cell (car body)) CELL_WIDTH)
                                                             "left" "top" (aux (cdr body) head bg (add1 acc)))
                                          (place-image/align (square CELL_WIDTH "solid" "green")
-                                                            (* (remainder (car body) COUNT_CELLS) CELL_WIDTH)
-                                                            (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
+                                                            (* (col-of-cell (car body)) CELL_WIDTH)
+                                                            (* (row-of-cell (car body)) CELL_WIDTH)
                                                             "left" "top" (aux (cdr body) head bg (add1 acc))))])]))]
-    (aux body0 head bg 1))
-  )
+    (aux body0 head bg 1)))
+
+;; game -> game
+;; create the next game state
+(define (next g)
+  (cond [(and (= (game-dir g) 0) (= (game-head g) 1))
+         (game (map (lambda (cell) (add1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+        [(and (= (game-dir g) 2) (= (game-head g) 0))
+         (game (map (lambda (cell) (sub1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+        [(and (= (game-dir g) 3) (= (game-head g) 0))
+         (game (map (lambda (cell) (- cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+        [(and (= (game-dir g) 1) (= (game-head g) 1))
+         (game (map (lambda (cell) (+ cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+        [(and (= (game-dir g) 0)
+              (= (game-head g) 0)
+              (> (col-of-cell (add1 (car (game-snake-body g))))
+                 (col-of-cell (car (cdr (game-snake-body g))))))
+         (game (move-right (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+        [(and (= (game-dir g) 0)
+              (= (game-head g) 0) (error "Illegal move"))]
+        ;(list-ref (game-snake-body g) (sub1 (length (game-snake-body g))))
+        [else g]))
+
+; listof cells -> listof cells
+; move the body of the snake to the right direction
+(define (move-right cl) 
+  (local [(define (aux cl acc)
+            (cond [(empty? cl) empty]
+                  [else (cons 
+                         (if (or (= (row-of-cell (car cl)) acc) (= acc -1)) 
+                             (add1 (car cl))
+                             (- (car cl) COUNT_CELLS)) 
+                         (aux (cdr cl) (row-of-cell (car cl))))]))]
+    (aux cl -1)))
+
+; number -> number
+; get the row of the cell
+(define (row-of-cell c)
+  (quotient c COUNT_CELLS))
+
+; number -> number
+; get the column of the cell
+(define (col-of-cell c)
+  (remainder c COUNT_CELLS))
+
 
 (define (main score)
   (big-bang score
