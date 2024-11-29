@@ -20,6 +20,12 @@
 (define COUNT_CELLS (/ GRID_WIDTH CELL_WIDTH))
 (define GRID_BORDER_COLOR "black")
 (define BACKGROUND (empty-scene SCENE_WIDTH SCENE_HEIGHT))
+(define RIGHT 0)
+(define DOWN 1)
+(define LEFT 2)
+(define UP 3)
+(define HEAD_START 0)
+(define HEAD_END 1)
 
 (provide (all-defined-out))
 
@@ -44,58 +50,58 @@
   (local [(define (aux body head bg acc)
             (cond [(empty? body) bg]
                   [else
-                   (cond [(= head 0) (if (= acc 1) 
-                                         (place-image/align (square CELL_WIDTH "solid" "seagreen")
-                                                            (* (col-of-cell (car body)) CELL_WIDTH)
-                                                            (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
-                                                            "left" "top" (aux (cdr body) head bg (add1 acc)))
-                                         (place-image/align (square CELL_WIDTH "solid" "green")
-                                                            (* (col-of-cell (car body)) CELL_WIDTH)
-                                                            (* (row-of-cell (car body)) CELL_WIDTH)
-                                                            "left" "top" (aux (cdr body) head bg (add1 acc))))]
-                         [(= head 1) (if (= acc (length body0))
-                                         (place-image/align (square CELL_WIDTH "solid" "seagreen")
-                                                            (* (col-of-cell (car body)) CELL_WIDTH)
-                                                            (* (row-of-cell (car body)) CELL_WIDTH)
-                                                            "left" "top" (aux (cdr body) head bg (add1 acc)))
-                                         (place-image/align (square CELL_WIDTH "solid" "green")
-                                                            (* (col-of-cell (car body)) CELL_WIDTH)
-                                                            (* (row-of-cell (car body)) CELL_WIDTH)
-                                                            "left" "top" (aux (cdr body) head bg (add1 acc))))])]))]
+                   (cond [(= head HEAD_START) (if (= acc 1) 
+                                                  (place-image/align (square CELL_WIDTH "solid" "seagreen")
+                                                                     (* (col-of-cell (car body)) CELL_WIDTH)
+                                                                     (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
+                                                                     "left" "top" (aux (cdr body) head bg (add1 acc)))
+                                                  (place-image/align (square CELL_WIDTH "solid" "green")
+                                                                     (* (col-of-cell (car body)) CELL_WIDTH)
+                                                                     (* (row-of-cell (car body)) CELL_WIDTH)
+                                                                     "left" "top" (aux (cdr body) head bg (add1 acc))))]
+                         [(= head HEAD_END) (if (= acc (length body0))
+                                                (place-image/align (square CELL_WIDTH "solid" "seagreen")
+                                                                   (* (col-of-cell (car body)) CELL_WIDTH)
+                                                                   (* (row-of-cell (car body)) CELL_WIDTH)
+                                                                   "left" "top" (aux (cdr body) head bg (add1 acc)))
+                                                (place-image/align (square CELL_WIDTH "solid" "green")
+                                                                   (* (col-of-cell (car body)) CELL_WIDTH)
+                                                                   (* (row-of-cell (car body)) CELL_WIDTH)
+                                                                   "left" "top" (aux (cdr body) head bg (add1 acc))))])]))]
     (aux body0 head bg 1)))
 
 ;; game -> game
 ;; create the next game state
 (define (next g)
-  (cond [(and (= (game-dir g) 0) (= (game-head g) 1))
+  (cond [(and (= (game-dir g) RIGHT) (= (game-head g) HEAD_END))
          (game (map (lambda (cell) (add1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) 2) (= (game-head g) 0))
+        [(and (= (game-dir g) LEFT) (= (game-head g) HEAD_START))
          (game (map (lambda (cell) (sub1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) 3) (= (game-head g) 0))
+        [(and (= (game-dir g) UP) (= (game-head g) HEAD_START))
          (game (map (lambda (cell) (- cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) 1) (= (game-head g) 1))
+        [(and (= (game-dir g) DOWN) (= (game-head g) HEAD_END))
          (game (map (lambda (cell) (+ cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) 0)
-              (= (game-head g) 0)
+        [(and (= (game-dir g) RIGHT)
+              (= (game-head g) HEAD_START)
               (> (col-of-cell (add1 (car (game-snake-body g))))
                  (col-of-cell (car (cdr (game-snake-body g))))))
          (game (move-right (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) 0)
-              (= (game-head g) 0) (error "Illegal move"))]
-        ;(list-ref (game-snake-body g) (sub1 (length (game-snake-body g))))
+        [(and (= (game-dir g) RIGHT)
+              (= (game-head g) HEAD_START) (error "Illegal move"))]
         [else g]))
 
 ; listof cells -> listof cells
 ; move the body of the snake to the right direction
 (define (move-right cl) 
-  (local [(define (aux cl acc)
+  (local [(define (aux cl prev-row prev-col)
             (cond [(empty? cl) empty]
                   [else (cons 
-                         (if (or (= (row-of-cell (car cl)) acc) (= acc -1)) 
-                             (add1 (car cl))
-                             (- (car cl) COUNT_CELLS)) 
-                         (aux (cdr cl) (row-of-cell (car cl))))]))]
-    (aux cl -1)))
+                         (cond [(or (= (row-of-cell (car cl)) prev-row) (= prev-row -1)) (add1 (car cl))]
+                               [(or (= (col-of-cell (car cl)) prev-col) (= prev-col -1)) (- (car cl) COUNT_CELLS)]
+                               [ (= (row-of-cell (car cl)) (row-of-cell (car (cdr cl)))) (add1 (car cl))]
+                               [ (= (col-of-cell (car cl)) (add1 prev-col)) (- (car cl) COUNT_CELLS)])
+                         (aux (cdr cl) (row-of-cell (car cl)) (col-of-cell (car cl))))]))]
+    (aux cl -1 -1)))
 
 ; number -> number
 ; get the row of the cell
