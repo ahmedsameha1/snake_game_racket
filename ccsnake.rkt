@@ -73,22 +73,22 @@
 ;; game -> game
 ;; create the next game state
 (define (next g)
-  (cond [(and (= (game-dir g) RIGHT) (= (game-head g) HEAD_END))
-         (game (map (lambda (cell) (add1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) LEFT) (= (game-head g) HEAD_START))
-         (game (map (lambda (cell) (sub1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) UP) (= (game-head g) HEAD_START))
-         (game (map (lambda (cell) (- cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) DOWN) (= (game-head g) HEAD_END))
-         (game (map (lambda (cell) (+ cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) RIGHT)
-              (= (game-head g) HEAD_START)
-              (> (col-of-cell (add1 (car (game-snake-body g))))
-                 (col-of-cell (car (cdr (game-snake-body g))))))
-         (game (move-right (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-        [(and (= (game-dir g) RIGHT)
-              (= (game-head g) HEAD_START) (error "Illegal move"))]
-        [else g]))
+  (if (valid-direction? (game-snake-body g) (game-head g) (game-dir g))
+      (cond [(and (= (game-dir g) RIGHT) (= (game-head g) HEAD_END))
+             (game (map (lambda (cell) (add1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+            [(and (= (game-dir g) LEFT) (= (game-head g) HEAD_START))
+             (game (map (lambda (cell) (sub1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+            [(and (= (game-dir g) UP) (= (game-head g) HEAD_START))
+             (game (map (lambda (cell) (- cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+            [(and (= (game-dir g) DOWN) (= (game-head g) HEAD_END))
+             (game (map (lambda (cell) (+ cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+            [(and (= (game-dir g) RIGHT)
+                  (= (game-head g) HEAD_START)
+                  (> (col-of-cell (add1 (car (game-snake-body g))))
+                     (col-of-cell (car (cdr (game-snake-body g))))))
+             (game (move-right (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+            [else g])
+      (error "Invalid direction")))
 
 ; listof cells -> listof cells
 ; move the body of the snake to the right direction
@@ -102,6 +102,66 @@
                                [ (= (col-of-cell (car cl)) (add1 prev-col)) (- (car cl) COUNT_CELLS)])
                          (aux (cdr cl) (row-of-cell (car cl)) (col-of-cell (car cl))))]))]
     (aux cl -1 -1)))
+;; listof cells, head postion, direction -> boolean
+;; check if the direction is valid for the body of the snake
+(define (valid-direction? body head dir)
+  (cond [(= dir RIGHT) (not (go-left? body head))]
+        [(= dir LEFT) (not (go-right? body head))]
+        [(= dir UP) (not (go-down? body head))]
+        [(= dir DOWN) (not (go-up? body head))]))
+
+;; listof cells, head position -> boolean
+;; check if the snake is moving to the left direction
+(define (go-left? body0 head)
+  (local [(define headpos (if (= head HEAD_START) (car body0) (list-ref body0 (sub1 (length body0)))))
+          (define col-of-head (col-of-cell headpos))
+          (define headlessbody (remove headpos body0))
+          (define (aux body coh)
+            (cond [(empty? body) #t]
+                  [(>= col-of-head (col-of-cell (car body))) #f]
+                  [else (aux (cdr body) head)]
+                  ))]
+    (aux headlessbody col-of-head)))
+
+;; listof cells, head position -> boolean
+;; check if the snake is moving to the right direction
+(define (go-right? body0 head)
+  (local [(define headpos (if (= head HEAD_START) (car body0) (list-ref body0 (sub1 (length body0)))))
+          (define col-of-head (col-of-cell headpos))
+          (define headlessbody (remove headpos body0))
+          (define (aux body coh)
+            (cond [(empty? body) #t]
+                  [(<= col-of-head (col-of-cell (car body))) #f]
+                  [else (aux (cdr body) head)]
+                  ))]
+    (aux headlessbody col-of-head)))
+
+;; listof cells, head position -> boolean
+;; check if the snake is moving to the down direction
+(define (go-down? body0 head)
+  (local [(define headpos (if (= head HEAD_START) (car body0) (list-ref body0 (sub1 (length body0)))))
+          (define row-of-head (row-of-cell headpos))
+          (define headlessbody (remove headpos body0))
+          (define (aux body roh)
+            (cond [(empty? body) #t]
+                  [(<= row-of-head (row-of-cell (car body))) #f]
+                  [else (aux (cdr body) head)]
+                  ))]
+    (aux headlessbody row-of-head)))
+
+;; listof cells, head position -> boolean
+;; check if the snake is moving to the up direction
+(define (go-up? body0 head)
+  (local [(define headpos (if (= head HEAD_START) (car body0) (list-ref body0 (sub1 (length body0)))))
+          (define row-of-head (row-of-cell headpos))
+          (define headlessbody (remove headpos body0))
+          (define (aux body roh)
+            (cond [(empty? body) #t]
+                  [(>= row-of-head (row-of-cell (car body))) #f]
+                  [else (aux (cdr body) head)]
+                  ))]
+    (aux headlessbody row-of-head)))
+
 
 ; number -> number
 ; get the row of the cell
