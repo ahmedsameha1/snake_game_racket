@@ -75,7 +75,7 @@
 (define (next g)
   (if (valid-direction? (game-snake-body g) (game-head g) (game-dir g))
       (cond [(and (= (game-dir g) RIGHT) (= (game-head g) HEAD_END))
-             (game (map (lambda (cell) (add1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+             (game (move-right (game-snake-body g) (game-head g)) (game-head g) (game-dir g) (game-score g))]
             [(and (= (game-dir g) LEFT) (= (game-head g) HEAD_START))
              (game (map (lambda (cell) (sub1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
             [(and (= (game-dir g) UP) (= (game-head g) HEAD_START))
@@ -86,22 +86,15 @@
                   (= (game-head g) HEAD_START)
                   (> (col-of-cell (add1 (car (game-snake-body g))))
                      (col-of-cell (car (cdr (game-snake-body g))))))
-             (game (move-right (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
+             (game (move-right (game-snake-body g) (game-head g)) (game-head g) (game-dir g) (game-score g))]
             [else g])
       (error "Invalid direction")))
 
 ; listof cells -> listof cells
 ; move the body of the snake to the right direction
-(define (move-right cl) 
-  (local [(define (aux cl prev-row prev-col)
-            (cond [(empty? cl) empty]
-                  [else (cons 
-                         (cond [(or (= (row-of-cell (car cl)) prev-row) (= prev-row -1)) (add1 (car cl))]
-                               [(or (= (col-of-cell (car cl)) prev-col) (= prev-col -1)) (- (car cl) COUNT_CELLS)]
-                               [ (= (row-of-cell (car cl)) (row-of-cell (car (cdr cl)))) (add1 (car cl))]
-                               [ (= (col-of-cell (car cl)) (add1 prev-col)) (- (car cl) COUNT_CELLS)])
-                         (aux (cdr cl) (row-of-cell (car cl)) (col-of-cell (car cl))))]))]
-    (aux cl -1 -1)))
+(define (move-right cl head)
+  (if (= head HEAD_END) (append (cdr cl) (cons (add1 (list-ref cl (sub1 (length cl)))) empty)) (cons (add1 (car cl)) (take cl (sub1 (length cl))))
+      ))
 ;; listof cells, head postion, direction -> boolean
 ;; check if the direction is valid for the body of the snake
 (define (valid-direction? body head dir)

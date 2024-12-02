@@ -500,7 +500,13 @@
 (check-equal? (next (game (list 112 111 110 145 180) HEAD_START RIGHT 0)) (game (list 113 112 111 110 145) HEAD_START RIGHT 0))
 (check-equal? (next (game (list 112 111 110 145 180 215) HEAD_START RIGHT 0)) (game (list 113 112 111 110 145 180) HEAD_START RIGHT 0))
 (check-equal? (next (game (list 112 111 110 145) HEAD_START RIGHT 0)) (game (list 113 112 111 110) HEAD_START RIGHT 0))
-(check-equal? (next (game (list 112 111 110 145 212 213 214 180 215) HEAD_START RIGHT 0))
-              (game (list 113 112 111 110 213 214 215 145 180) HEAD_START RIGHT 0))
+(check-equal? (next (game (list 112 111 110 145 180 215 214 213 212) HEAD_START RIGHT 0))
+              (game (list 113 112 111 110 145 180 215 214 213) HEAD_START RIGHT 0))
+(check-equal? (next (game (list 42 41 40 75 110 145 180 215 216 217 218 219 220 255 290 291 292 293 258 223 188 153 152 151 150 149 
+                                114 79 80 81 82 83 84) HEAD_START RIGHT 0))
+              (game (list 43 42 41 40 75 110 145 180 215 216 217 218 219 220 255 290 291 292 293 258 223 188 153 152 151 150 149
+                          114 79 80 81 82 83) HEAD_START RIGHT 0))
+(check-equal? (next (game (list 110 111 112 147 182 217 252 253 254) HEAD_END RIGHT 0))
+              (game (list 111 112 147 182 217 252 253 254 255) HEAD_END RIGHT 0))
 (check-equal? (next (game (list 109 110 111 112) HEAD_START LEFT 0)) (game (list 108 109 110 111) HEAD_START LEFT 0))
 
