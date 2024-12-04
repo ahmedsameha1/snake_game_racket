@@ -26,6 +26,7 @@
 (define UP 3)
 (define HEAD_START 0)
 (define HEAD_END 1)
+;(define start (random 700))
 
 (provide (all-defined-out))
 
@@ -95,9 +96,24 @@
 (define (col-of-cell c)
   (remainder c COUNT_CELLS))
 
+;; game, string (key) -> game
+;; handle the user input of arrow keys
+(define (handle-arrows g a-key)
+  (cond [(and (or (= (get-direction (game-snake-body g)) RIGHT) (= (get-direction (game-snake-body g)) LEFT)) (key=? a-key "up"))
+         (game (cons (- (car (game-snake-body g)) COUNT_CELLS)(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
+        [(and (or (= (get-direction (game-snake-body g)) RIGHT) (= (get-direction (game-snake-body g)) LEFT)) (key=? a-key "down"))
+         (game (cons (+ (car (game-snake-body g)) COUNT_CELLS)(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
+        [(and (or (= (get-direction (game-snake-body g)) DOWN) (= (get-direction (game-snake-body g)) UP)) (key=? a-key "right"))
+         (game (cons (add1 (car (game-snake-body g)))(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
+        [(and (or (= (get-direction (game-snake-body g)) DOWN) (= (get-direction (game-snake-body g)) UP)) (key=? a-key "left"))
+         (game (cons (sub1 (car (game-snake-body g)))(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
+        [else g]
+        ))
 
 (define (main score)
   (big-bang score
     (to-draw render)
     (on-tick next 0.2)
+    (on-key handle-arrows)
     ))
+
