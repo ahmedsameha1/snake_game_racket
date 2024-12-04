@@ -29,16 +29,18 @@
 
 (provide (all-defined-out))
 
-(struct game (snake-body head dir score) #:transparent)
+(struct game (snake-body dir score) #:transparent)
 ;; Game is (make-game  (listof cells) score)
 ;; interp. the current state of a snake game
-;;         with the current cells of the snake body, the position of the head of the snake,
+;;         with the current cells of the snake body
 ;;         the direction of the move of the snake and score
 
+;; game -> Image
+;; graw the game state on ticks
 (define (render g) (place-images/align (list (text (string-append SCORE_STRING (number->string (game-score g)))
                                                    SCORE_SIZE SCORE_COLOR)
                                              (rectangle GRID_WIDTH GRID_HEIGHT "outline" GRID_BORDER_COLOR)
-                                             (draw-snake-body (game-snake-body g) (game-head g) (empty-scene GRID_WIDTH GRID_WIDTH)))      
+                                             (draw-snake-body (game-snake-body g) (empty-scene GRID_WIDTH GRID_WIDTH)))      
                                        (list (make-posn SCORE_X SCORE_Y)
                                              (make-posn GRID_X GRID_Y)
                                              (make-posn GRID_X GRID_Y))
@@ -46,49 +48,37 @@
 
 ;; List of Numbers, Image -> Image
 ;; Draws the body of the snake over the image of background
-(define (draw-snake-body body0 head bg)
-  (local [(define (aux body head bg acc)
+(define (draw-snake-body body0 bg)
+  (local [(define (aux body bg acc)
             (cond [(empty? body) bg]
                   [else
-                   (cond [(= head HEAD_START) (if (= acc 1) 
-                                                  (place-image/align (square CELL_WIDTH "solid" "seagreen")
-                                                                     (* (col-of-cell (car body)) CELL_WIDTH)
-                                                                     (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
-                                                                     "left" "top" (aux (cdr body) head bg (add1 acc)))
-                                                  (place-image/align (square CELL_WIDTH "solid" "green")
-                                                                     (* (col-of-cell (car body)) CELL_WIDTH)
-                                                                     (* (row-of-cell (car body)) CELL_WIDTH)
-                                                                     "left" "top" (aux (cdr body) head bg (add1 acc))))]
-                         [(= head HEAD_END) (if (= acc (length body0))
-                                                (place-image/align (square CELL_WIDTH "solid" "seagreen")
-                                                                   (* (col-of-cell (car body)) CELL_WIDTH)
-                                                                   (* (row-of-cell (car body)) CELL_WIDTH)
-                                                                   "left" "top" (aux (cdr body) head bg (add1 acc)))
-                                                (place-image/align (square CELL_WIDTH "solid" "green")
-                                                                   (* (col-of-cell (car body)) CELL_WIDTH)
-                                                                   (* (row-of-cell (car body)) CELL_WIDTH)
-                                                                   "left" "top" (aux (cdr body) head bg (add1 acc))))])]))]
-    (aux body0 head bg 1)))
+                   (if (= acc 1) 
+                       (place-image/align (square CELL_WIDTH "solid" "seagreen")
+                                          (* (col-of-cell (car body)) CELL_WIDTH)
+                                          (* (quotient (car body) COUNT_CELLS) CELL_WIDTH)
+                                          "left" "top" (aux (cdr body) bg (add1 acc)))
+                       (place-image/align (square CELL_WIDTH "solid" "green")
+                                          (* (col-of-cell (car body)) CELL_WIDTH)
+                                          (* (row-of-cell (car body)) CELL_WIDTH)
+                                          "left" "top" (aux (cdr body) bg (add1 acc))))]))]
+    (aux body0 bg 1)))
 
 ;; game -> game
 ;; create the next game state
 (define (next g)
-  (if (valid-direction? (game-snake-body g) (game-head g) (game-dir g))
-      (cond [(and (= (game-dir g) RIGHT) (= (game-head g) HEAD_END))
-             (game (move-right (game-snake-body g) (game-head g)) (game-head g) (game-dir g) (game-score g))]
-            [(and (= (game-dir g) LEFT) (= (game-head g) HEAD_START))
-             (game (map (lambda (cell) (sub1 cell)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-            [(and (= (game-dir g) UP) (= (game-head g) HEAD_START))
-             (game (map (lambda (cell) (- cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-            [(and (= (game-dir g) DOWN) (= (game-head g) HEAD_END))
-             (game (map (lambda (cell) (+ cell COUNT_CELLS)) (game-snake-body g)) (game-head g) (game-dir g) (game-score g))]
-            [(and (= (game-dir g) RIGHT)
-                  (= (game-head g) HEAD_START)
-                  (> (col-of-cell (add1 (car (game-snake-body g))))
-                     (col-of-cell (car (cdr (game-snake-body g))))))
-             (game (move-right (game-snake-body g) (game-head g)) (game-head g) (game-dir g) (game-score g))]
-            [else g])
-      (error "Invalid direction")))
+  (cond [(= (game-dir g) RIGHT)(game (cons (add1 (car (game-snake-body g))) 
+                                           (take (game-snake-body g)
+                                                 (sub1 (length (game-snake-body g))))) (game-dir g) (game-score g))]
+        [(= (game-dir g) LEFT) (game (cons (sub1 (car (game-snake-body g))) 
+                                           (take (game-snake-body g)
+                                                 (sub1 (length (game-snake-body g))))) (game-dir g) (game-score g))]
+        [(= (game-dir g) UP) (game (cons (- (car (game-snake-body g)) COUNT_CELLS) 
+                                         (take (game-snake-body g)
+                                               (sub1 (length (game-snake-body g))))) (game-dir g) (game-score g))]
+        [(= (game-dir g) DOWN) (game (cons (+ (car (game-snake-body g)) COUNT_CELLS) 
+                                           (take (game-snake-body g)
+                                                 (sub1 (length (game-snake-body g))))) (game-dir g) (game-score g))]
+        ))
 
 ; listof cells -> listof cells
 ; move the body of the snake to the right direction
