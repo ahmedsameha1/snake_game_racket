@@ -107,13 +107,28 @@
          (game (cons (add1 (car (game-snake-body g)))(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
         [(and (or (= (get-direction (game-snake-body g)) DOWN) (= (get-direction (game-snake-body g)) UP)) (key=? a-key "left"))
          (game (cons (sub1 (car (game-snake-body g)))(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
-        [else g]
-        ))
+        [else g]))
+;; get randomly the head of the body of the snake at the start of the game 
+(define (get-starting-head random)
+  (local [(define head (random 1225))]
+    (if (or (< (row-of-cell head) 3) (> (row-of-cell head) 31) (< (col-of-cell head) 3) (> (col-of-cell head) 31)) 
+        (get-starting-head random)
+        head)))
 
-(define (main score)
-  (big-bang score
+(define (get-starting-game get-starting-head get-starting-direction)
+  (local [(define starting-snake-head (get-starting-head random))
+          (define direction (get-starting-direction 4))]
+    (cond [(= direction RIGHT) (game (list starting-snake-head (- starting-snake-head 1) (- starting-snake-head 2) (- starting-snake-head 3)) 0)]
+          [(= direction LEFT) (game (list starting-snake-head (+ starting-snake-head 1) (+ starting-snake-head 2) (+ starting-snake-head 3)) 0)]
+          [(= direction DOWN) (game (list starting-snake-head (- starting-snake-head 35) (- starting-snake-head 70) (- starting-snake-head 105)) 0)]
+          [(= direction UP) (game (list starting-snake-head (+ starting-snake-head 35) (+ starting-snake-head 70) (+ starting-snake-head 105)) 0)])))
+
+
+
+(define (main g)
+  (big-bang g
     (to-draw render)
     (on-tick next 0.2)
-    (on-key handle-arrows)
-    ))
+    (on-key handle-arrows)))
 
+(main (get-starting-game get-starting-head random))
