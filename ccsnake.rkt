@@ -26,7 +26,6 @@
 (define UP 3)
 (define HEAD_START 0)
 (define HEAD_END 1)
-;(define start (random 700))
 
 (provide (all-defined-out))
 
@@ -63,20 +62,15 @@
 ;; game -> game
 ;; create the next game state
 (define (next g)
-  (local [(define dir (get-direction (game-snake-body g)))]
-    (cond [(= dir RIGHT)(game (cons (add1 (car (game-snake-body g))) 
-                                    (take (game-snake-body g)
-                                          (sub1 (length (game-snake-body g))))) (game-score g))]
-          [(= dir LEFT) (game (cons (sub1 (car (game-snake-body g))) 
-                                    (take (game-snake-body g)
-                                          (sub1 (length (game-snake-body g))))) (game-score g))]
-          [(= dir UP) (game (cons (- (car (game-snake-body g)) COUNT_CELLS) 
-                                  (take (game-snake-body g)
-                                        (sub1 (length (game-snake-body g))))) (game-score g))]
-          [(= dir DOWN) (game (cons (+ (car (game-snake-body g)) COUNT_CELLS) 
-                                    (take (game-snake-body g)
-                                          (sub1 (length (game-snake-body g))))) (game-score g))]
-          )))
+  (local [(define dir (get-direction (game-snake-body g)))
+          (define head (car (game-snake-body g)))
+          (define body (game-snake-body g))
+          (define score (game-score g))]
+    (cond [(= dir RIGHT)(game (cons (add1 head) (take body (sub1 (length body)))) score)]
+          [(= dir LEFT) (game (cons (sub1 head) (take body (sub1 (length body)))) score)]
+          [(= dir UP) (game (cons (- head COUNT_CELLS) (take body (sub1 (length body)))) score)]
+          [(= dir DOWN) (game (cons (+ head COUNT_CELLS) (take body (sub1 (length body)))) score)])))
+
 
 ;; listof cells -> number
 ;; get the direction of the body of the snake
@@ -99,15 +93,21 @@
 ;; game, string (key) -> game
 ;; handle the user input of arrow keys
 (define (handle-arrows g a-key)
-  (cond [(and (or (= (get-direction (game-snake-body g)) RIGHT) (= (get-direction (game-snake-body g)) LEFT)) (key=? a-key "up"))
-         (game (cons (- (car (game-snake-body g)) COUNT_CELLS)(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
-        [(and (or (= (get-direction (game-snake-body g)) RIGHT) (= (get-direction (game-snake-body g)) LEFT)) (key=? a-key "down"))
-         (game (cons (+ (car (game-snake-body g)) COUNT_CELLS)(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
-        [(and (or (= (get-direction (game-snake-body g)) DOWN) (= (get-direction (game-snake-body g)) UP)) (key=? a-key "right"))
-         (game (cons (add1 (car (game-snake-body g)))(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
-        [(and (or (= (get-direction (game-snake-body g)) DOWN) (= (get-direction (game-snake-body g)) UP)) (key=? a-key "left"))
-         (game (cons (sub1 (car (game-snake-body g)))(take (game-snake-body g) (sub1 (length (game-snake-body g))))) (game-score g))]
-        [else g]))
+  (local [(define dir (get-direction (game-snake-body g)))
+          (define head  (car (game-snake-body g)))
+          (define body (game-snake-body g))
+          (define score (game-score g))]
+    (cond [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "up"))
+           (game (cons (- head COUNT_CELLS)(take body (sub1 (length body)))) score)]
+          [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "down"))
+           (game (cons (+ head COUNT_CELLS)(take body (sub1 (length body)))) score)]
+          [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "right"))
+           (game (cons (add1 head)(take body (sub1 (length body)))) score)]
+          [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "left"))
+           (game (cons (sub1 head)(take body (sub1 (length body)))) score)]
+          [else g])))
+
+
 ;; get randomly the head of the body of the snake at the start of the game 
 (define (get-starting-head random)
   (local [(define head (random 1225))]
@@ -123,12 +123,20 @@
           [(= direction DOWN) (game (list starting-snake-head (- starting-snake-head 35) (- starting-snake-head 70) (- starting-snake-head 105)) 0)]
           [(= direction UP) (game (list starting-snake-head (+ starting-snake-head 35) (+ starting-snake-head 70) (+ starting-snake-head 105)) 0)])))
 
-
+(define (game-over? g) 
+  (local [(define col1 (col-of-cell (car (game-snake-body g))))
+          (define row1 (row-of-cell (car (game-snake-body g))))
+          (define col2 (col-of-cell (car (cdr (game-snake-body g)))))
+          (define row2 (row-of-cell (car (cdr (game-snake-body g)))))]
+    (or (< row1 0) (> row1 34) (< col1 0) (> col1 34) (and (not (= row1 row2)) (not (= col1 col2))))))
 
 (define (main g)
-  (big-bang g
-    (to-draw render)
-    (on-tick next 0.2)
-    (on-key handle-arrows)))
+  (big-bang (big-bang g
+              (to-draw render)
+              (on-tick next 0.2)
+              (on-key handle-arrows)
+              (stop-when game-over?)
+              (close-on-stop 2))
+    (to-draw (lambda (k) (square 200 "outline" "red")))))
 
 (main (get-starting-game get-starting-head random))

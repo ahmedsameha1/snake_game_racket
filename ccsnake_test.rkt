@@ -468,6 +468,7 @@
                                    (make-posn (+ (* CELL_WIDTH 3) (* CELL_WIDTH 3)) (+ 0 (* CELL_WIDTH 33))))
                                   "left" "top" BACKGROUND))
 
+
 (check-equal? (next (game (list 3 2 1 0) 0)) (game (list 4 3 2 1)  0))
 (check-equal? (next (game (list 31 32 33 34) 0)) (game (list 30 31 32 33) 0))
 (check-equal? (next (game (list 105 140 175 210) 0)) (game (list 70 105 140 175) 0))
@@ -482,25 +483,23 @@
                                 114 79 80 81 82 83 84) 0))
               (game (list 43 42 41 40 75 110 145 180 215 216 217 218 219 220 255 290 291 292 293 258 223 188 153 152 151 150 149
                           114 79 80 81 82 83) 0))
-
 (check-equal? (next (game (list 38 39 40 75 110 145 180 215 216 217 218 219 220 255 290 291 292 293 258 223 188 153 152 151 150 149 
                                 114 79 80 81 82 83 84) 0))
               (game (list 37 38 39 40 75 110 145 180 215 216 217 218 219 220 255 290 291 292 293 258 223 188 153 152 151 150 149 
                           114 79 80 81 82 83) 0))
-
 (check-equal? (next (game (list 40 75 110 145 180 215 216 217 218 219 220 255 290 291 292 293 258 223 188 153 152 151 150 149 
                                 114 79 80 81 82 83 84 85 120 155) 0))
               (game (list 5 40 75 110 145 180 215 216 217 218 219 220 255 290 291 292 293 258 223 188 153 152 151 150 149 
                           114 79 80 81 82 83 84 85 120) 0))
-
 (check-equal? (next (game (list 155 120 85 84 83 82 81 80 79 114 149 150 151 152 153 188 223 258 293 292 291 290 255 220 219 218 
                                 217 216 215 180 145 110 75 40) 0))
               (game (list 190 155 120 85 84 83 82 81 80 79 114 149 150 151 152 153 188 223 258 293 292 291 290 255 220 219 218
                           217 216 215 180 145 110 75) 0))
-
 (check-equal? (next (game (list 254 253 252 217 182 147 112 111 110) 0))
               (game (list 255 254 253 252 217 182 147 112 111) 0))
 (check-equal? (next (game (list 109 110 111 112)  0)) (game (list 108 109 110 111)  0))
+
+
 (check-equal? (handle-arrows (game (list 3 2 1 0) 0) "left") (game (list 3 2 1 0) 0))
 (check-equal? (handle-arrows (game (list 31 32 33 34) 0) "right") (game (list 31 32 33 34) 0))
 (check-equal? (handle-arrows (game (list 210 175 140 105) 0) "up") (game (list 210 175 140 105) 0))
@@ -557,3 +556,25 @@
 (check-equal? (get-starting-game (lambda (k) 700) (lambda (k) LEFT)) (game '(700 701 702 703) 0))
 (check-equal? (get-starting-game (lambda (k) 700) (lambda (k) UP)) (game '(700 735 770 805) 0))
 (check-equal? (get-starting-game (lambda (k) 700) (lambda (k) DOWN)) (game '(700 665 630 595) 0))
+(check-equal? (game-over? (game '(-35 0 1 2) 0)) true)
+(check-equal? (game-over? (game '(-32 3 2 1) 0)) true)
+(check-equal? (game-over? (game '(1225 1190 1191 1192) 0)) true)
+(check-equal? (game-over? (game '(1259 1224 1223 1222) 0)) true)
+(check-equal? (game-over? (game '(1189 1190 1155 1120) 0)) true)
+(check-equal? (game-over? (game '(-1 0 35 70) 0)) true)
+(check-equal? (game-over? (game '(35 34 69 104) 0)) true)
+(check-equal? (game-over? (game '(1225 1224 1189 1154) 0)) true)
+(check-equal? (game-over? (game '(1259 1224 1189 1154) 0)) true)
+(check-equal? (game-over? (game '(1242 1207 1172 1137) 0)) true)
+(check-equal? (game-over? (game '(1225 1190 1155 1120) 0)) true)
+(check-equal? (game-over? (game '(-1 34 69 104) 0)) true)
+(check-equal? (game-over? (game '(-18 17 52 87) 0)) true)
+(check-equal? (game-over? (game '(-35 0 35 70) 0)) true)
+(check-equal? (game-over? (game '(1225 1224 1223 1222) 0)) true)
+(check-equal? (game-over? (game '(700 699 698 697) 0)) true)
+(check-equal? (game-over? (game '(35 34 33 32) 0)) true)
+(check-equal? (game-over? (game '(1189 1190 1191 1192) 0)) true)
+(check-equal? (game-over? (game '(699 700 701 702) 0)) true)
+(check-equal? (game-over? (game '(-1 0 1 2) 0)) true)
+(check-equal? (game-over? (game (list 210 175 140 105) 0)) false)
+(check-equal? (game-over? (game (list 113 112 111 110 145) 0)) false)
