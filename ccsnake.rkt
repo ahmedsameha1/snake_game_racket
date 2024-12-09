@@ -9,6 +9,7 @@
 (define SCENE_HEIGHT 745)
 (define SCORE_STRING "Score: ")
 (define SCORE_SIZE 20)
+(define RESULT_SCORE_SIZE (* 3 SCORE_SIZE))
 (define SCORE_COLOR "brown")
 (define SCORE_X 15)
 (define SCORE_Y 15)
@@ -26,6 +27,7 @@
 (define UP 3)
 (define HEAD_START 0)
 (define HEAD_END 1)
+(define START_NEW_GAME "Press space to start a new game")
 
 (provide (all-defined-out))
 
@@ -130,13 +132,21 @@
           (define row2 (row-of-cell (car (cdr (game-snake-body g)))))]
     (or (< row1 0) (> row1 34) (< col1 0) (> col1 34) (and (not (= row1 row2)) (not (= col1 col2))))))
 
+(define (render-result g) 
+  (local [(define result (above 
+                          (text (string-append SCORE_STRING (number->string (game-score g))) RESULT_SCORE_SIZE SCORE_COLOR)
+                          (text START_NEW_GAME SCORE_SIZE SCORE_COLOR)))]
+    (place-image/align result (/ (- (image-width BACKGROUND) (image-width result)) 2)
+                       (/ (- (image-height BACKGROUND) (image-height result)) 2)
+                       "left" "top" BACKGROUND)))
+
 (define (main g)
   (big-bang (big-bang g
               (to-draw render)
               (on-tick next 0.2)
               (on-key handle-arrows)
               (stop-when game-over?)
-              (close-on-stop 2))
-    (to-draw (lambda (k) (square 200 "outline" "red")))))
+              (close-on-stop 1))
+    (to-draw render-result)))
 
 (main (get-starting-game get-starting-head random))

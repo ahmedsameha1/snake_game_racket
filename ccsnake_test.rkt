@@ -578,3 +578,40 @@
 (check-equal? (game-over? (game '(-1 0 1 2) 0)) true)
 (check-equal? (game-over? (game (list 210 175 140 105) 0)) false)
 (check-equal? (game-over? (game (list 113 112 111 110 145) 0)) false)
+
+(check-equal? (render-result (game '(700 699 698 697) 0))
+              (place-image/align (above (text (string-append SCORE_STRING (number->string 0))
+                                              RESULT_SCORE_SIZE SCORE_COLOR)
+                                        (text START_NEW_GAME
+                                              SCORE_SIZE SCORE_COLOR))
+                                 (/ (- (image-width BACKGROUND)
+                                       (image-width 
+                                        (above (text (string-append SCORE_STRING (number->string 0))
+                                                     RESULT_SCORE_SIZE SCORE_COLOR)
+                                               (text START_NEW_GAME
+                                                     SCORE_SIZE SCORE_COLOR)))) 2)
+                                 (/ (- (image-height BACKGROUND) 
+                                       (image-height 
+                                        (above (text (string-append SCORE_STRING (number->string 0))
+                                                     RESULT_SCORE_SIZE SCORE_COLOR)
+                                               (text START_NEW_GAME
+                                                     SCORE_SIZE SCORE_COLOR)))) 2)                                        
+                                 "left" "top" BACKGROUND))
+(check-equal? (render-result (game '(700 699 698 697) 100))
+              (place-image/align (above (text (string-append SCORE_STRING (number->string 100))
+                                              RESULT_SCORE_SIZE SCORE_COLOR)
+                                        (text START_NEW_GAME
+                                              SCORE_SIZE SCORE_COLOR))
+                                 (/ (- (image-width BACKGROUND)
+                                       (image-width 
+                                        (above (text (string-append SCORE_STRING (number->string 100))
+                                                     RESULT_SCORE_SIZE SCORE_COLOR)
+                                               (text START_NEW_GAME
+                                                     SCORE_SIZE SCORE_COLOR)))) 2) 
+                                 (/ (- (image-height BACKGROUND) 
+                                       (image-height 
+                                        (above (text (string-append SCORE_STRING (number->string 100))
+                                                     RESULT_SCORE_SIZE SCORE_COLOR)
+                                               (text START_NEW_GAME
+                                                     SCORE_SIZE SCORE_COLOR)))) 2)
+                                 "left" "top" BACKGROUND))
