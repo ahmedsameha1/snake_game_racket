@@ -4,7 +4,7 @@
 (require 2htdp/universe)
 (require lang/posn)
 
-
+(define RAT_IMAGE (scale 1/30 (bitmap "rat.png"))) ;; the rat image by <a href="https://www.freepik.com/search">Icon by Smashicons</a>
 (define SCENE_WIDTH 700)
 (define SCENE_HEIGHT 745)
 (define SCORE_STRING "Score: ")
@@ -31,19 +31,22 @@
 
 (provide (all-defined-out))
 
-(struct game (snake-body score) #:transparent)
-;; Game is (make-game  (listof cells) score)
+(struct game (snake-body rat score) #:transparent)
+;; game is (make-game  (listof cells) score)
 ;; interp. the current state of a snake game
-;;         with the current cells of the snake body and score
+;;         with the current cells of the snake body, the current rat position and score
 
 ;; game -> Image
 ;; graw the game state on ticks
 (define (render g) (place-images/align (list (text (string-append SCORE_STRING (number->string (game-score g)))
                                                    SCORE_SIZE SCORE_COLOR)
                                              (rectangle GRID_WIDTH GRID_HEIGHT "outline" GRID_BORDER_COLOR)
+                                             RAT_IMAGE
                                              (draw-snake-body (game-snake-body g) (empty-scene GRID_WIDTH GRID_WIDTH)))      
                                        (list (make-posn SCORE_X SCORE_Y)
                                              (make-posn GRID_X GRID_Y)
+                                             (make-posn (+ GRID_X (* (col-of-cell (game-rat g)) CELL_WIDTH) 3) 
+                                                        (+ GRID_Y (* (row-of-cell (game-rat g)) CELL_WIDTH) 3))
                                              (make-posn GRID_X GRID_Y))
                                        "left" "top" BACKGROUND))
 
@@ -63,15 +66,22 @@
 
 ;; game -> game
 ;; create the next game state
-(define (next g)
+(define (next g get-rat-pos)
   (local [(define dir (get-direction (game-snake-body g)))
           (define head (car (game-snake-body g)))
           (define body (game-snake-body g))
-          (define score (game-score g))]
-    (cond [(= dir RIGHT)(game (cons (add1 head) (take body (sub1 (length body)))) score)]
-          [(= dir LEFT) (game (cons (sub1 head) (take body (sub1 (length body)))) score)]
-          [(= dir UP) (game (cons (- head COUNT_CELLS) (take body (sub1 (length body)))) score)]
-          [(= dir DOWN) (game (cons (+ head COUNT_CELLS) (take body (sub1 (length body)))) score)])))
+          (define rbody (take body (sub1 (length body))))
+          (define score (game-score g))
+          (define rat (game-rat g))]
+    (if (= head rat)
+        (game (cond [(= dir RIGHT) (cons (add1 head) body)]
+                    [(= dir LEFT) (cons (sub1 head) body)]
+                    [(= dir UP) (cons (- head COUNT_CELLS) body)]
+                    [(= dir DOWN) (cons (+ head COUNT_CELLS) body)]) (get-rat-pos random body) (add1 score))
+        (game (cond [(= dir RIGHT) (cons (add1 head) rbody )]
+                    [(= dir LEFT) (cons (sub1 head) rbody)]
+                    [(= dir UP) (cons (- head COUNT_CELLS) rbody)]
+                    [(= dir DOWN) (cons (+ head COUNT_CELLS) rbody)]) rat score))))
 
 
 ;; listof cells -> number
@@ -94,20 +104,28 @@
 
 ;; game, string (key) -> game
 ;; handle the user input of arrow keys
-(define (handle-arrows g a-key)
+(define (handle-arrows g a-key get-rat-pos)
   (local [(define dir (get-direction (game-snake-body g)))
           (define head  (car (game-snake-body g)))
           (define body (game-snake-body g))
-          (define score (game-score g))]
-    (cond [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "up"))
-           (game (cons (- head COUNT_CELLS)(take body (sub1 (length body)))) score)]
-          [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "down"))
-           (game (cons (+ head COUNT_CELLS)(take body (sub1 (length body)))) score)]
-          [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "right"))
-           (game (cons (add1 head)(take body (sub1 (length body)))) score)]
-          [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "left"))
-           (game (cons (sub1 head)(take body (sub1 (length body)))) score)]
-          [else g])))
+          (define rbody (take body (sub1 (length body))))
+          (define score (game-score g))
+          (define rat (game-rat g))]
+    (if (= head rat)
+        (game (cond [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "up")) (cons (- head COUNT_CELLS) body)]
+                    [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "down")) (cons (+ head COUNT_CELLS) body)]
+                    [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "right")) (cons (add1 head) body)]
+                    [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "left")) (cons (sub1 head) body)]
+                    [else body]) (get-rat-pos random body) (add1 score)) 
+        (cond [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "up"))
+               (game (cons (- head COUNT_CELLS) rbody) rat score)]
+              [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "down"))
+               (game (cons (+ head COUNT_CELLS) rbody) rat score)]
+              [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "right"))
+               (game (cons (add1 head) rbody) rat score)]
+              [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "left"))
+               (game (cons (sub1 head) rbody) rat score)]
+              [else g]))))
 
 
 ;; get randomly the head of the body of the snake at the start of the game 
@@ -117,13 +135,23 @@
         (get-starting-head random)
         head)))
 
-(define (get-starting-game get-starting-head get-starting-direction)
+(define (get-rat-pos random body) 
+  (local [(define pos (random 1225))]
+    (if (false? (member pos body)) pos (get-rat-pos random body))))
+
+(define (get-starting-game get-starting-head get-starting-direction get-rat-pos)
   (local [(define starting-snake-head (get-starting-head random))
-          (define direction (get-starting-direction 4))]
-    (cond [(= direction RIGHT) (game (list starting-snake-head (- starting-snake-head 1) (- starting-snake-head 2) (- starting-snake-head 3)) 0)]
-          [(= direction LEFT) (game (list starting-snake-head (+ starting-snake-head 1) (+ starting-snake-head 2) (+ starting-snake-head 3)) 0)]
-          [(= direction DOWN) (game (list starting-snake-head (- starting-snake-head 35) (- starting-snake-head 70) (- starting-snake-head 105)) 0)]
-          [(= direction UP) (game (list starting-snake-head (+ starting-snake-head 35) (+ starting-snake-head 70) (+ starting-snake-head 105)) 0)])))
+          (define direction (get-starting-direction 4))
+          (define body 
+            (cond [(= direction RIGHT)
+                   (list starting-snake-head (- starting-snake-head 1) (- starting-snake-head 2) (- starting-snake-head 3))]
+                  [(= direction LEFT)
+                   (list starting-snake-head (+ starting-snake-head 1) (+ starting-snake-head 2) (+ starting-snake-head 3))]
+                  [(= direction DOWN) 
+                   (list starting-snake-head (- starting-snake-head 35) (- starting-snake-head 70) (- starting-snake-head 105))]
+                  [(= direction UP) 
+                   (list starting-snake-head (+ starting-snake-head 35) (+ starting-snake-head 70) (+ starting-snake-head 105))]))]
+    (game body (get-rat-pos random body) 0)))
 
 (define (game-over? g) 
   (local [(define col1 (col-of-cell (car (game-snake-body g))))
@@ -143,18 +171,19 @@
 (define (main g)
   (big-bang (big-bang g
               (to-draw render)
-              (on-tick next 0.2)
-              (on-key handle-arrows)
+              (on-tick (lambda (x) (next x get-rat-pos)) 0.2)
+              (on-key (lambda (x k) (handle-arrows x k get-rat-pos)))
               (stop-when game-over?)
               (close-on-stop 1))
     (to-draw render-result)
     (on-key (lambda (g a-key) 
               (if (key=? a-key " ") 
                   (big-bang 
-                      (get-starting-game get-starting-head random)(to-draw render)
-                    (on-tick next 0.2)
-                    (on-key handle-arrows)
+                      (get-starting-game get-starting-head random get-rat-pos)
+                    (to-draw render)
+                    (on-tick (lambda (x) (next x get-rat-pos)) 0.2)
+                    (on-key (lambda (x k) (handle-arrows x k get-rat-pos)))
                     (stop-when game-over?)
                     (close-on-stop 1)) g)))))
 
-(main (get-starting-game get-starting-head random))
+(main (get-starting-game get-starting-head random get-rat-pos))
