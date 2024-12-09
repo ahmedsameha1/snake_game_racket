@@ -147,6 +147,14 @@
               (on-key handle-arrows)
               (stop-when game-over?)
               (close-on-stop 1))
-    (to-draw render-result)))
+    (to-draw render-result)
+    (on-key (lambda (g a-key) 
+              (if (key=? a-key " ") 
+                  (big-bang 
+                      (get-starting-game get-starting-head random)(to-draw render)
+                    (on-tick next 0.2)
+                    (on-key handle-arrows)
+                    (stop-when game-over?)
+                    (close-on-stop 1)) g)))))
 
 (main (get-starting-game get-starting-head random))
