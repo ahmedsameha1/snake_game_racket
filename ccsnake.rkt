@@ -55,11 +55,11 @@
 (define (draw-snake-body body0 bg)
   (local [(define (aux body bg)
             (cond [(empty? body) bg]
-                  [else  (place-image/align (square CELL_WIDTH "solid" "green")
+                  [else  (place-image/align (overlay (square (- CELL_WIDTH 2) "solid" "green") (square CELL_WIDTH "solid" "yellow"))
                                             (* (col-of-cell (car body)) CELL_WIDTH)
                                             (* (row-of-cell (car body)) CELL_WIDTH)
                                             "left" "top" (aux (cdr body) bg))]))]
-    (place-image/align (square CELL_WIDTH "solid" "seagreen")
+    (place-image/align (overlay (square (- CELL_WIDTH 2) "solid" "seagreen") (square CELL_WIDTH "solid" "yellow"))
                        (* (col-of-cell (car body0)) CELL_WIDTH)
                        (* (row-of-cell (car body0)) CELL_WIDTH)
                        "left" "top" (aux (cdr body0) bg))))
