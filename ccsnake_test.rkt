@@ -575,7 +575,6 @@
 (check-equal? (handle-arrows (game (list 106 141 176 211) 200 0) "left" (lambda (k r) 300)) (game (list 105 106 141 176) 200 0))
 (check-equal? (handle-arrows (game (list 106 141 176 211) 106 0) "left" (lambda (k r) 300)) (game (list 105 106 141 176 211) 300 1))
 
-
 (define ls (list 105 106 107 73 38 3 108))
 (define c 0)
 (check-equal? (get-starting-head (lambda (k) (begin (set! c (add1 c)) (list-ref ls (sub1 c))))) 108)
@@ -638,6 +637,7 @@
 (check-equal? (game-over? (game '(-1 0 1 2) 200 0)) true)
 (check-equal? (game-over? (game (list 210 175 140 105) 200 0)) false)
 (check-equal? (game-over? (game (list 113 112 111 110 145) 200 0)) false)
+(check-equal? (game-over? (game '(592 591 590 589 554 519 484 485 486 487 522 557 592 627) 1093 13)) true)
 
 (check-equal? (render-result (game '(700 699 698 697) 200 0))
               (place-image/align (above (text (string-append SCORE_STRING (number->string 0))

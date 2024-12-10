@@ -158,7 +158,9 @@
           (define row1 (row-of-cell (car (game-snake-body g))))
           (define col2 (col-of-cell (car (cdr (game-snake-body g)))))
           (define row2 (row-of-cell (car (cdr (game-snake-body g)))))]
-    (or (< row1 0) (> row1 34) (< col1 0) (> col1 34) (and (not (= row1 row2)) (not (= col1 col2))))))
+    (or (< row1 0) (> row1 34) (< col1 0) (> col1 34) (and (not (= row1 row2)) (not (= col1 col2)))
+        (number? (check-duplicates (game-snake-body g)))
+        )))
 
 (define (render-result g) 
   (local [(define result (above 
