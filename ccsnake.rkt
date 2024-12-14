@@ -74,14 +74,14 @@
           (define score (game-score g))
           (define rat (game-rat g))]
     (if (= head rat)
-        (game (cond [(= dir RIGHT) (cons (add1 head) body)]
-                    [(= dir LEFT) (cons (sub1 head) body)]
-                    [(= dir UP) (cons (- head COUNT_CELLS) body)]
-                    [(= dir DOWN) (cons (+ head COUNT_CELLS) body)]) (get-rat-pos random body) (add1 score))
-        (game (cond [(= dir RIGHT) (cons (add1 head) rbody )]
-                    [(= dir LEFT) (cons (sub1 head) rbody)]
-                    [(= dir UP) (cons (- head COUNT_CELLS) rbody)]
-                    [(= dir DOWN) (cons (+ head COUNT_CELLS) rbody)]) rat score))))
+        (game (cond [(= dir RIGHT) (turn-snake-right head body)]
+                    [(= dir LEFT) (turn-snake-left head body)]
+                    [(= dir UP) (turn-snake-up head body)]
+                    [(= dir DOWN) (turn-snake-down head body)]) (get-rat-pos random body) (add1 score))
+        (game (cond [(= dir RIGHT) (turn-snake-right head rbody)]
+                    [(= dir LEFT) (turn-snake-left head rbody)]
+                    [(= dir UP) (turn-snake-up head rbody)]
+                    [(= dir DOWN) (turn-snake-down head rbody)]) rat score))))
 
 
 ;; listof cells -> number
@@ -112,28 +112,30 @@
           (define score (game-score g))
           (define rat (game-rat g))]
     (if (= head rat)
-        (game (cond [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "up")) (cons (- head COUNT_CELLS) body)]
-                    [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "down")) (cons (+ head COUNT_CELLS) body)]
-                    [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "right")) (cons (add1 head) body)]
-                    [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "left")) (cons (sub1 head) body)]
+        (game (cond [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "up")) (turn-snake-up head body)]
+                    [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "down")) (turn-snake-down head body)]
+                    [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "right")) (turn-snake-right head body)]
+                    [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "left")) (turn-snake-left head body)]
                     [else body]) (get-rat-pos random body) (add1 score)) 
-        (cond [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "up"))
-               (game (cons (- head COUNT_CELLS) rbody) rat score)]
-              [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "down"))
-               (game (cons (+ head COUNT_CELLS) rbody) rat score)]
-              [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "right"))
-               (game (cons (add1 head) rbody) rat score)]
-              [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "left"))
-               (game (cons (sub1 head) rbody) rat score)]
-              [else g]))))
+        (game (cond [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "up")) (turn-snake-up head rbody)]
+                    [(and (or (= dir RIGHT) (= dir LEFT)) (key=? a-key "down")) (turn-snake-down head rbody)]
+                    [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "right")) (turn-snake-right head rbody)]
+                    [(and (or (= dir DOWN) (= dir UP)) (key=? a-key "left")) (turn-snake-left head rbody)]
+                    [else body]) rat score))))
 
+(define (turn-snake-up head body) (cons (- head COUNT_CELLS) body))
+
+(define (turn-snake-down head body) (cons (+ head COUNT_CELLS) body))
+
+(define (turn-snake-right head body) (cons (add1 head) body))
+
+(define (turn-snake-left head body) (cons (sub1 head) body))
 
 ;; get randomly the head of the body of the snake at the start of the game 
 (define (get-starting-head random)
   (local [(define head (random 1225))]
     (if (or (< (row-of-cell head) 3) (> (row-of-cell head) 31) (< (col-of-cell head) 3) (> (col-of-cell head) 31)) 
-        (get-starting-head random)
-        head)))
+        (get-starting-head random) head)))
 
 (define (get-rat-pos random body) 
   (local [(define pos (random 1225))]
@@ -158,9 +160,11 @@
           (define row1 (row-of-cell (car (game-snake-body g))))
           (define col2 (col-of-cell (car (cdr (game-snake-body g)))))
           (define row2 (row-of-cell (car (cdr (game-snake-body g)))))]
-    (or (< row1 0) (> row1 34) (< col1 0) (> col1 34) (and (not (= row1 row2)) (not (= col1 col2)))
-        (number? (check-duplicates (game-snake-body g)))
-        )))
+    (or 
+     ; detect collision with walls
+     (< row1 0) (> row1 34) (< col1 0) (> col1 34) (and (not (= row1 row2)) (not (= col1 col2)))
+     ; detect collision with itself (snake body)        
+     (number? (check-duplicates (game-snake-body g))))))
 
 (define (render-result g) 
   (local [(define result (above 
